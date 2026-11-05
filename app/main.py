@@ -30,7 +30,7 @@ async def bootstrap(app: App, span: Span):
     span.attrs({"tiles.cells": game.cells, "tiles.frame_ancestors": config.frame_ancestors})
 
     # pages
-    TilesPage(game, relay).register(app)
+    TilesPage(game, relay, config.public_url.rstrip("/")).register(app)
 
     app.create_task(finish_rounds_forever(app, game, relay), name="tiles.rounds")
     yield

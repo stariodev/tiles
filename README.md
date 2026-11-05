@@ -75,6 +75,7 @@ Yard sees a `pyproject.toml` that lists `stario` and a `uv.lock`, writes the con
 | Setting | Default | What it does |
 |---|---|---|
 | `FRAME_ANCESTORS` | empty | Sites that may show the board in an iframe, separated by spaces, such as `https://stario.dev`. Empty means none. |
+| `PUBLIC_URL` | `https://tiles.stario.dev` | The address this copy is served at. The share preview (the title, text, and picture a chat shows for a link) needs absolute links. Set it to your own address. |
 
 ## Good to know
 

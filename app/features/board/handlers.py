@@ -27,6 +27,7 @@ class TilesPage:
 
     game: Game
     relay: Relay[dict]
+    public_url: str  # for the share preview in the page head
 
     def register(self, app: App) -> None:
         app.add(HOME, self.home)
@@ -35,7 +36,7 @@ class TilesPage:
 
     async def home(self, c: Context, w: Writer) -> None:
         # A new id for each page load: two tabs are two players.
-        w.html(render(uuid.uuid7().hex, self.game))
+        w.html(render(uuid.uuid7().hex, self.game, self.public_url))
 
     async def live(self, c: Context, w: Writer) -> None:
         user_id = await read_user_id(c)
@@ -50,10 +51,10 @@ class TilesPage:
             sse = SSE(w)
             self.game.join(user_id)
             self.relay.publish(CHANGED, {})  # the other tabs show the new player
-            sse.patch_elements(render(user_id, self.game))
+            sse.patch_elements(render(user_id, self.game, self.public_url))
             # c.alive ends the loop when the tab closes or the server shuts down.
             async for _subject, _payload in c.alive(events):
-                sse.patch_elements(render(user_id, self.game))
+                sse.patch_elements(render(user_id, self.game, self.public_url))
 
         self.game.leave(user_id)
         self.relay.publish(CHANGED, {})  # the other tabs drop this player

@@ -8,6 +8,7 @@ from stario import h
 from stario.datastar import at, data
 from stario.markup import HtmlElement, classes, styles
 
+from app.assets import SHARE_IMAGE
 from app.common.shell import page
 from app.features.board.data import Game
 from app.features.board.urls import CLICK, LIVE
@@ -17,7 +18,7 @@ WAVE_STEP = 0.04
 SPARKLES = 14
 
 
-def render(user_id: str, game: Game) -> HtmlElement:
+def render(user_id: str, game: Game, public_url: str) -> HtmlElement:
     return page(
         "Tiles",
         h.Main(
@@ -31,6 +32,8 @@ def render(user_id: str, game: Game) -> HtmlElement:
             info_view(user_id, game),
             board_view(game),
         ),
+        public_url,
+        public_url + SHARE_IMAGE,
     )
 
 
