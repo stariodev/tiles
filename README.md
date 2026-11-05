@@ -31,7 +31,7 @@ app/
   main.py                    bootstrap: builds the Game and the Relay, registers the page, starts the round loop
   config.py                  every setting, read from the environment
   common/shell.py            the <html> document around every page
-  common/framing.py          lets the sites named in FRAME_ANCESTORS show the board in an iframe
+  common/framing.py          Framing: lets the sites in FRAME_ANCESTORS show the board in an iframe
   features/board/
     urls.py                  the three routes
     data.py                  the Game: the board and the players, with no HTTP in it

@@ -4,7 +4,7 @@ from stario import App, Relay, Span, serve
 from stario.http import same_origin, security_headers
 
 from app.assets import ASSETS
-from app.common.framing import allow_framing
+from app.common.framing import Framing
 from app.config import Config
 from app.features.board.data import Game
 from app.features.board.handlers import TilesPage, finish_rounds_forever
@@ -19,9 +19,8 @@ async def bootstrap(app: App, span: Span):
     # same_origin: a POST from another site gets 403. security_headers: nosniff, a
     # referrer policy, and no framing, unless FRAME_ANCESTORS names who may frame it.
     if config.frame_ancestors:
-        app.use(
-            "/", same_origin(), security_headers(frame=None), allow_framing(config.frame_ancestors)
-        )
+        framing = Framing(config.frame_ancestors)
+        app.use("/", same_origin(), security_headers(frame=None), framing.attach)
     else:
         app.use("/", same_origin(), security_headers())
     span.attrs(await ASSETS.attach(app))
