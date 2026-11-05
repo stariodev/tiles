@@ -14,6 +14,9 @@ class Config:
     # Origins that may show the board in an <iframe>, separated by spaces, e.g.
     # "https://stario.dev". Empty: no other site may frame it.
     frame_ancestors: str = ""
+    # The address this copy is served at. Share previews need absolute links, so a
+    # copy of your own sets it to its own address.
+    public_url: str = "https://tiles.stario.dev"
 
     @classmethod
     def from_env(cls) -> Config:

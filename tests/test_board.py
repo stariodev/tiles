@@ -97,3 +97,24 @@ async def test_frame_ancestors_lets_one_site_frame_it(monkeypatch):
         r = await client.get(HOME.href())
     assert r.headers.get("x-frame-options") is None
     assert r.headers.get("content-security-policy") == "frame-ancestors 'self' https://stario.dev"
+
+
+async def test_the_page_has_a_share_preview(client):
+    r = await client.get(HOME.href())
+    assert '<meta property="og:title" content="Tiles"/>' in r.text
+    assert '<meta property="og:url" content="https://tiles.stario.dev"/>' in r.text
+    assert (
+        '<meta property="og:image" content="https://tiles.stario.dev/static/images/share.' in r.text
+    )
+    assert '<meta name="twitter:card" content="summary_large_image"/>' in r.text
+
+
+async def test_public_url_sets_the_preview_links(monkeypatch):
+    monkeypatch.setenv("PUBLIC_URL", "https://tiles.example.com/")
+    async with TestClient(bootstrap, request_timeout=5) as client:
+        r = await client.get(HOME.href())
+    assert '<meta property="og:url" content="https://tiles.example.com"/>' in r.text
+    assert (
+        '<meta property="og:image" content="https://tiles.example.com/static/images/share.'
+        in r.text
+    )
