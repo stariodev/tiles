@@ -10,11 +10,11 @@ from stario.markup import HtmlElement, classes, styles
 
 from app.assets import SHARE_IMAGE
 from app.common.shell import page
-from app.features.board.data import Game
-from app.features.board.urls import CLICK, LIVE
+from app.features.board.data import DEFAULT_SIZE, SIZES, Game
+from app.features.board.urls import CLICK, HOME, LIVE
 
-# Seconds between two cells lighting up in the celebration wave.
-WAVE_STEP = 0.04
+# Seconds the celebration wave takes to cross the board, whatever its size.
+WAVE_SECONDS = 1.0
 SPARKLES = 14
 
 
@@ -28,9 +28,10 @@ def render(user_id: str, game: Game, public_url: str) -> HtmlElement:
             # when a patch arrives.
             data.signals({"user_id": user_id}, if_missing=True),
             # Opens GET /live when the page loads, and reopens it after a network blip.
-            data.init(at.get(LIVE.href(), retry="always")),
+            data.init(at.get(LIVE.href(query={"size": str(game.size)}), retry="always")),
             info_view(user_id, game),
             board_view(game),
+            sizes_view(game),
         ),
         public_url,
         public_url + SHARE_IMAGE,
@@ -89,7 +90,7 @@ def cell_view(cell: int, game: Game) -> HtmlElement:
     if color:
         style["background-color"] = color
     if game.celebrating:
-        style["animation-delay"] = f"{cell * WAVE_STEP:.2f}s"
+        style["animation-delay"] = f"{cell * WAVE_SECONDS / game.cells:.2f}s"
     return h.Div(
         {"data-cell": str(cell)},
         classes("cell", "painted" if color else None),
@@ -106,11 +107,14 @@ def board_view(game: Game) -> HtmlElement:
             classes(
                 "board", "complete" if full else None, "celebrating" if game.celebrating else None
             ),
+            # The stylesheet shrinks the cells to fit this many in a row.
+            styles({"--size": str(game.size)}),
             # One listener for the whole board. A click on a cell posts its number;
             # a click on a gap between cells has no data-cell and posts nothing.
             data.on(
                 "click",
-                f"evt.target.dataset.cell && @post(`{CLICK.href()}?cell=${{evt.target.dataset.cell}}`)",
+                f"evt.target.dataset.cell && @post(`{CLICK.href(query={'size': str(game.size)})}"
+                "&cell=${evt.target.dataset.cell}`)",
             ),
             [
                 h.Div(
@@ -121,6 +125,22 @@ def board_view(game: Game) -> HtmlElement:
             ],
             sparkles_view() if game.celebrating else None,
         ),
+    )
+
+
+def sizes_view(game: Game) -> HtmlElement:
+    # Plain links: each size is its own shared board at its own URL. The default
+    # board keeps the bare URL, so old links and the tutorial embed still land on it.
+    return h.Nav(
+        {"class": "sizes", "aria-label": "Board size"},
+        [
+            h.A(
+                {"href": HOME.href(query={} if size == DEFAULT_SIZE else {"size": str(size)})},
+                {"aria-current": "page"} if size == game.size else None,
+                f"{size}×{size}",
+            )
+            for size in SIZES
+        ],
     )
 
 

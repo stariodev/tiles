@@ -20,6 +20,10 @@ COLORS = (
     "#6366f1",  # indigo
     "#06b6d4",  # cyan
 )
+# The board sizes a player may pick, as cells per side. Each size is one shared
+# board; a fixed list keeps memory bounded whatever a URL asks for.
+SIZES = (3, 5, 8, 12)
+DEFAULT_SIZE = 5
 # A new round starts with this share of the cells painted, so it never looks empty.
 FIRST_FILL = 0.3
 # A full board celebrates this long; then the round starts again.
@@ -27,7 +31,7 @@ CELEBRATION_SECONDS = 4.0
 
 
 class Game:
-    def __init__(self, size: int = 5) -> None:
+    def __init__(self, size: int = DEFAULT_SIZE) -> None:
         self.size = size
         self.board: dict[int, str] = {}  # cell -> colour
         self.players: dict[str, str] = {}  # user_id -> colour, for each tab with an open stream

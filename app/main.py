@@ -6,7 +6,7 @@ from stario.http import same_origin, security_headers
 from app.assets import ASSETS
 from app.common.framing import Framing
 from app.config import Config
-from app.features.board.data import Game
+from app.features.board.data import SIZES, Game
 from app.features.board.handlers import TilesPage, finish_rounds_forever
 
 
@@ -25,14 +25,14 @@ async def bootstrap(app: App, span: Span):
         app.use("/", same_origin(), security_headers())
     span.attrs(await ASSETS.attach(app))
 
-    game = Game()
+    games = {size: Game(size) for size in SIZES}  # one shared board per size
     relay: Relay[dict] = Relay()  # in-process fan-out between the open streams
-    span.attrs({"tiles.cells": game.cells, "tiles.frame_ancestors": config.frame_ancestors})
+    span.attrs({"tiles.sizes": list(SIZES), "tiles.frame_ancestors": config.frame_ancestors})
 
     # pages
-    TilesPage(game, relay, config.public_url.rstrip("/")).register(app)
+    TilesPage(games, relay, config.public_url.rstrip("/")).register(app)
 
-    app.create_task(finish_rounds_forever(app, game, relay), name="tiles.rounds")
+    app.create_task(finish_rounds_forever(app, games, relay), name="tiles.rounds")
     yield
 
 

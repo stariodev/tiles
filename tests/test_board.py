@@ -118,3 +118,56 @@ async def test_public_url_sets_the_preview_links(monkeypatch):
         '<meta property="og:image" content="https://tiles.example.com/static/images/share.'
         in r.text
     )
+
+
+async def test_each_size_is_its_own_board(client):
+    r = await client.get(HOME.href(query={"size": "8"}))
+    assert r.status_code == 200
+    assert "/ 64 painted" in r.text
+    assert "@get('/live?size=8'" in r.text
+    assert '<a href="/?size=8" aria-current="page">' in r.text
+
+
+async def test_tabs_on_one_size_share_it_and_other_sizes_do_not(client):
+    big = {"size": "8"}
+    async with (
+        client.stream("GET", LIVE.href(query=big), params=tab("t1"), timeout=2) as mine,
+        client.stream("GET", LIVE.href(query=big), params=tab("t2"), timeout=2) as other,
+        client.stream("GET", LIVE.href(), params=tab("t3"), timeout=2) as small,
+    ):
+        one, two = mine.iter_events(), other.iter_events()
+        await anext(one)
+        await anext(two)
+        await until(small.iter_events(), "/ 25 painted")
+        page = await client.get(HOME.href(query=big))
+        cell = next(i for i in range(64) if f'data-cell="{i}" class="cell"' in page.text)
+        r = await client.post(CLICK.href(query={**big, "cell": str(cell)}), json={"user_id": "t1"})
+        assert r.status_code == 204
+        painted = f'data-cell="{cell}" class="cell painted"'
+        assert painted in await until(one, painted)
+        assert painted in await until(two, painted)
+        # The 5x5 board has no t1 player: a click there from t1 is refused.
+        r = await client.post(CLICK.href(query={"cell": "0"}), json={"user_id": "t1"})
+        assert r.status_code == 400
+        # A cell past 25 exists on the 8x8 board only.
+        r = await client.post(CLICK.href(query={"cell": "30"}), json={"user_id": "t3"})
+        assert r.status_code == 400
+
+
+async def test_an_unknown_size_is_refused(client):
+    for size in ("4", "100", "x", ""):
+        r = await client.get(HOME.href(query={"size": size}))
+        assert r.status_code == 404, size
+        r = await client.get(LIVE.href(query={"size": size}), params=tab("t1"))
+        assert r.status_code == 400, size
+        r = await client.post(CLICK.href(query={"size": size, "cell": "0"}), json={"user_id": "t1"})
+        assert r.status_code == 400, size
+
+
+def test_a_board_of_any_size_fills_and_celebrates():
+    game = Game(12)
+    game.join("t1")
+    for cell in range(game.cells):
+        if cell not in game.board:
+            assert game.paint("t1", cell)
+    assert game.celebrating
