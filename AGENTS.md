@@ -124,6 +124,8 @@ Tiles is the demo at tiles.stario.dev and the finished app of the Realtime tiles
 
 One page, `app/features/board`, on state in memory (skill `stario-relay`). `finish_rounds_forever` in `handlers.py` is the timer loop that counts down a full board and starts the next round.
 
+Look: keycaps on a dark plate, amber accent. The views put each player colour in the CSS variable `--c` (a painted cell, a swatch), never `background-color`; `static/css/style.css` paints and lights the keys with it. Fonts (Space Grotesk, JetBrains Mono) are self-hosted in `static/fonts` with their OFL licences, so the embed on stario.dev calls no other host.
+
 Env: `FRAME_ANCESTORS` names the sites that may frame the board; the stario.dev deploy sets it to `https://stario.dev`, which embeds the board in the tutorial. `PUBLIC_URL` (default `https://tiles.stario.dev`) makes the share preview's links absolute.
 
 Files kept in two places: `static/js/datastar.js` is the Datastar build that stario-create ships, the same file as in stariodev/life and stario.dev. `stario-create sync` does not touch it. When Stario moves to a new Datastar, copy the file from a fresh `uvx stario-create new` into all three. `static/images/share.jpg` is the poster of the Tiles clip, made in bobowski-site (`MEDIA.md`); copy it again when that clip is rendered again.
