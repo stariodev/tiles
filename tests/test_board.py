@@ -171,3 +171,16 @@ def test_a_board_of_any_size_fills_and_celebrates():
         if cell not in game.board:
             assert game.paint("t1", cell)
     assert game.celebrating
+
+
+async def test_each_size_link_counts_its_players(client):
+    async with (
+        client.stream("GET", LIVE.href(query={"size": "8"}), params=tab("t1"), timeout=2) as big,
+        client.stream("GET", LIVE.href(), params=tab("t2"), timeout=2) as small,
+    ):
+        await anext(big.iter_events())
+        # The 5x5 tab sees the player on 8x8, and one on its own board.
+        page = await until(small.iter_events(), 'href="/?size=8">8×8<span')
+        assert '<a href="/?size=8">8×8<span class="sizes-count" title="1 playing"' in page
+        assert 'aria-current="page">5×5<span class="sizes-count" title="1 playing"' in page
+        assert "3×3</a>" in page  # nobody there: no badge

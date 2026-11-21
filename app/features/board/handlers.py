@@ -14,6 +14,9 @@ from app.features.board.views import render
 # stream reads its Game again and sends the whole page. Datastar morphs only what
 # differs, and the writer compresses the stream, so a full page costs little.
 CHANGED = "board.changed"
+# A tab joined or left some board. Every stream repaints, since every page shows
+# how many play on each size.
+PLAYERS = "board.players"
 
 
 async def read_user_id(c: Context) -> str | None:
@@ -51,7 +54,7 @@ class TilesPage:
             w.text(f"size must be one of {', '.join(map(str, SIZES))}", status=404)
             return
         # A new id for each page load: two tabs are two players.
-        w.html(render(uuid.uuid7().hex, game, self.public_url))
+        w.html(render(uuid.uuid7().hex, game, self.games, self.public_url))
 
     async def live(self, c: Context, w: Writer) -> None:
         user_id = await read_user_id(c)
@@ -63,17 +66,17 @@ class TilesPage:
 
         # Subscribe before the first render, so no change falls between them.
         # latest=True keeps only the newest message, so a burst becomes one repaint.
-        async with self.relay.subscribe(changed(game), latest=True) as events:
+        async with self.relay.subscribe(changed(game), PLAYERS, latest=True) as events:
             sse = SSE(w)
             game.join(user_id)
-            self.relay.publish(changed(game), {})  # the other tabs show the new player
-            sse.patch_elements(render(user_id, game, self.public_url))
+            self.relay.publish(PLAYERS, {})  # every tab shows the new player
+            sse.patch_elements(render(user_id, game, self.games, self.public_url))
             # c.alive ends the loop when the tab closes or the server shuts down.
             async for _subject, _payload in c.alive(events):
-                sse.patch_elements(render(user_id, game, self.public_url))
+                sse.patch_elements(render(user_id, game, self.games, self.public_url))
 
         game.leave(user_id)
-        self.relay.publish(changed(game), {})  # the other tabs drop this player
+        self.relay.publish(PLAYERS, {})  # every tab drops this player
 
     async def click(self, c: Context, w: Writer) -> None:
         # 1. Read. 2. Validate.

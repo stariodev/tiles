@@ -241,6 +241,19 @@ body {
     text-decoration: none;
 }
 
+.sizes-count {
+    display: inline-block;
+    min-width: 1.2rem;
+    margin-left: 0.3rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    line-height: 1.2rem;
+    text-align: center;
+}
+
 .sizes a:hover {
     background: var(--accent-soft);
     color: var(--fg);

@@ -18,7 +18,7 @@ WAVE_SECONDS = 1.0
 SPARKLES = 14
 
 
-def render(user_id: str, game: Game, public_url: str) -> HtmlElement:
+def render(user_id: str, game: Game, games: dict[int, Game], public_url: str) -> HtmlElement:
     return page(
         "Tiles",
         h.Main(
@@ -31,7 +31,7 @@ def render(user_id: str, game: Game, public_url: str) -> HtmlElement:
             data.init(at.get(LIVE.href(query={"size": str(game.size)}), retry="always")),
             info_view(user_id, game),
             board_view(game),
-            sizes_view(game),
+            sizes_view(game, games),
         ),
         public_url,
         public_url + SHARE_IMAGE,
@@ -128,7 +128,7 @@ def board_view(game: Game) -> HtmlElement:
     )
 
 
-def sizes_view(game: Game) -> HtmlElement:
+def sizes_view(game: Game, games: dict[int, Game]) -> HtmlElement:
     # Plain links: each size is its own shared board at its own URL. The default
     # board keeps the bare URL, so old links and the tutorial embed still land on it.
     return h.Nav(
@@ -138,10 +138,19 @@ def sizes_view(game: Game) -> HtmlElement:
                 {"href": HOME.href(query={} if size == DEFAULT_SIZE else {"size": str(size)})},
                 {"aria-current": "page"} if size == game.size else None,
                 f"{size}×{size}",
+                players_count(len(games[size].players)),
             )
             for size in SIZES
         ],
     )
+
+
+def players_count(n: int) -> HtmlElement | None:
+    # Only a board with players gets a badge, so an empty size reads as quiet.
+    if not n:
+        return None
+    label = f"{n} playing"
+    return h.Span({"class": "sizes-count", "title": label, "aria-label": label}, str(n))
 
 
 def sparkles_view() -> HtmlElement:
