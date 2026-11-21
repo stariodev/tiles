@@ -39,7 +39,8 @@ def render(user_id: str, game: Game, games: dict[int, Game], public_url: str) ->
 
 
 def swatch(color: str) -> HtmlElement:
-    return h.Span({"class": "swatch"}, styles({"background-color": color}))
+    # The colour goes in --c: the stylesheet lights the swatch with it.
+    return h.Span({"class": "swatch"}, styles({"--c": color}))
 
 
 def info_view(user_id: str, game: Game) -> HtmlElement:
@@ -88,7 +89,7 @@ def cell_view(cell: int, game: Game) -> HtmlElement:
     color = game.board.get(cell)
     style: dict[str, str] = {}
     if color:
-        style["background-color"] = color
+        style["--c"] = color  # the stylesheet paints and lights the key with it
     if game.celebrating:
         style["animation-delay"] = f"{cell * WAVE_SECONDS / game.cells:.2f}s"
     return h.Div(
